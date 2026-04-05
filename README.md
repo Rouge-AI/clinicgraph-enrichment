@@ -2,7 +2,7 @@
 
 > *What ambient AI hears, ClinicalGraph understands.*
 
-KG-enrichment middleware for ambient clinical AI documentation. Takes a Suki-formatted ambient note (LOINC-structured JSON), traverses a lightweight ontology-grounded knowledge graph, and returns validated ICD-10 codes, gap flags with KG path evidence, and an audit trail.
+KG-enrichment middleware for ambient clinical AI documentation. Takes a Suki-formatted ambient note (LOINC-structured JSON), traverses a lightweight ontology-grounded knowledge graph, and returns validated ICD-10 codes, gap flags with KG path evidence, IMO preferred terminology, and a full audit trail.
 
 ---
 
@@ -51,9 +51,32 @@ curl http://localhost:8000/v1/graph/stats
 
 ---
 
-### Scenario 1 — GAP (the money shot)
+### Scenario 1 — CLEAN (no false positives)
 
-T2DM + bilateral edema. Suki coded E11.65 and I10. ClinicalGraph finds missing CKD code.
+Fully coded T2DM + CKD encounter. ClinicalGraph confirms — zero flags.
+
+```bash
+curl -X POST http://localhost:8000/v1/demo/clean
+```
+
+```json
+{
+  "encounter_id": "enc_demo_clean_001",
+  "status": "confirmed",
+  "gap_flags": [],
+  "note_quality": "complete",
+  "imo_terminology": null,
+  "audit_trail": { "processing_ms": 2.1 }
+}
+```
+
+**Demo line:** *"When documentation is already complete, ClinicalGraph confirms it. No false positives."*
+
+---
+
+### Scenario 2 — GAP (the money shot)
+
+T2DM + bilateral edema. Suki coded E11.65 and I10. ClinicalGraph finds the missing CKD code **and** surfaces the IMO preferred terminology to make the documentation stick.
 
 ```bash
 curl -X POST http://localhost:8000/v1/demo/gap
@@ -73,38 +96,26 @@ curl -X POST http://localhost:8000/v1/demo/gap
       "action": "Review and document if applicable"
     }
   ],
+  "imo_terminology": {
+    "imo_term": "Diabetic Nephropathy with Edema",
+    "imo_code": "IMO-44210",
+    "icd10_suggestion": "E11.65",
+    "confidence": 0.78,
+    "reasoning": "T2DM + bilateral edema cluster aligns with IMO preferred term for diabetic nephropathy. Ensures documentation specificity for HCC risk adjustment.",
+    "source": "mock",
+    "matched_cuis": ["C0011860", "C0013604"],
+    "action": "Consider updating note to IMO preferred term for coding specificity"
+  },
   "note_quality": "partial",
   "audit_trail": {
     "kg_version": "clinicgraph-v0.1-demo",
-    "processing_ms": 3.2,
+    "processing_ms": 3.8,
     "ontology_sources": ["SNOMED-subset", "ICD10-CM-subset", "PrimeKG-subset"]
   }
 }
 ```
 
-**Demo line:** *"Suki captured the conversation perfectly. ClinicalGraph found N18.3 — CKD stage 3 — missing from the coding. That's a $3,000 per year HCC gap. And it's traceable — not a black-box guess."*
-
----
-
-### Scenario 2 — CLEAN (no false positives)
-
-Fully coded T2DM + CKD encounter. ClinicalGraph confirms — zero flags.
-
-```bash
-curl -X POST http://localhost:8000/v1/demo/clean
-```
-
-```json
-{
-  "encounter_id": "enc_demo_clean_001",
-  "status": "confirmed",
-  "gap_flags": [],
-  "note_quality": "complete",
-  "audit_trail": { "processing_ms": 2.1 }
-}
-```
-
-**Demo line:** *"When documentation is already complete, ClinicalGraph confirms it. No false positives."*
+**Demo line:** *"Two symptoms. The KG finds the clinical relationship — N18.3, a $3,000 HCC gap. IMO gives the right language to document it: 'Diabetic Nephropathy with Edema'. The note, the code, and the terminology are all aligned."*
 
 ---
 
@@ -136,6 +147,7 @@ curl -X POST http://localhost:8000/v1/demo/partial
       "kg_path": "E66.9 → [associated_with] → G47.33"
     }
   ],
+  "imo_terminology": null,
   "note_quality": "partial"
 }
 ```
@@ -190,7 +202,7 @@ pip install pytest httpx
 pytest tests/ -v
 ```
 
-Expected: **32 passed**.
+Expected: **43 passed**.
 
 Coverage report:
 
@@ -199,7 +211,7 @@ python -m coverage run -m pytest tests/ -q
 python -m coverage report --include="app/*" --show-missing
 ```
 
-Expected: **94% coverage**.
+Expected: **94%+ coverage**.
 
 ---
 
@@ -209,20 +221,28 @@ Expected: **94% coverage**.
 clinicgraph-enrichment/
 ├── app/
 │   ├── main.py          ← FastAPI app + all endpoints
-│   ├── models.py        ← Pydantic request/response models
+│   ├── models.py        ← Pydantic models (incl. IMOTerminology)
 │   ├── enricher.py      ← KG traversal + enrichment pipeline
 │   ├── graph_loader.py  ← Loads NetworkX graph at startup
-│   └── ner.py           ← Dictionary-based clinical NER
+│   ├── ner.py           ← Dictionary-based clinical NER
+│   └── imo_client.py    ← IMO terminology client (mock + real API)
 ├── data/
 │   ├── kg/
-│   │   ├── nodes.json   ← 120 curated disease/condition nodes
-│   │   ├── edges.json   ← 130 relationships (3 clinical domains)
-│   │   └── icd_map.json ← CUI → ICD-10 mappings
+│   │   ├── nodes.json        ← 120 curated disease/condition nodes
+│   │   ├── edges.json        ← 130 relationships (3 clinical domains)
+│   │   └── icd_map.json      ← CUI → ICD-10 mappings
 │   └── demo/
-│       ├── note_gap.json     ← T2DM + edema, missing CKD
+│       ├── note_gap.json     ← T2DM + edema, missing CKD + IMO match
 │       ├── note_clean.json   ← Fully coded, zero false positives
 │       └── note_partial.json ← Obesity + HTN, missing E66.9/G47.33
-├── tests/               ← 32 TDD tests, 94% coverage
+├── tests/
+│   ├── conftest.py
+│   ├── test_models.py   ← RED-01 to RED-05
+│   ├── test_ner.py      ← RED-06 to RED-10
+│   ├── test_graph.py    ← RED-11 to RED-16
+│   ├── test_enricher.py ← RED-17 to RED-27
+│   ├── test_api.py      ← RED-25 to RED-35
+│   └── test_imo.py      ← RED-36 to RED-40
 └── scripts/
     └── build_kg.py      ← KG schema validator + future build reference
 ```
@@ -243,12 +263,33 @@ Nodes tagged with `sources: ["icd10cm", "snomed-subset", "primekg-subset"]` — 
 
 ---
 
+## IMO Terminology Integration
+
+After KG traversal, ClinicalGraph queries for the IMO preferred term that best matches the CUI cluster extracted from the note.
+
+| Condition | Behaviour |
+|---|---|
+| `IMO_API_KEY` not set | Uses mock DB, `source: "mock"` |
+| `IMO_API_KEY` set, API succeeds | Uses real API, `source: "imo_api"` |
+| `IMO_API_KEY` set, API fails | Falls back to mock, `source: "mock"` |
+
+To enable the real IMO API:
+
+```bash
+export IMO_API_KEY=your_key_here
+uvicorn app.main:app --reload --port 8000
+```
+
+The `imo_terminology` field is `null` when no matching CUI cluster is found (e.g. the clean note scenario).
+
+---
+
 ## How It Works
 
 ```
 Note text (LOINC JSON)
         ↓
-   NER extraction          ← dictionary lookup, ~50 medical terms
+   NER extraction          ← dictionary lookup, ~50 medical terms → CUIs + ICD codes
         ↓
  Unsubmitted NER codes     ← gap = what note implies vs. what's coded
         ↓
@@ -256,10 +297,25 @@ Note text (LOINC JSON)
         ↓
    Filter + rank           ← remove submitted codes, sort by confidence
         ↓
-   Gap flags + audit trail ← kg_path shows exactly which edge fired
+   IMO terminology lookup  ← CUI cluster → preferred term + ICD suggestion
+        ↓
+   Gap flags + IMO term    ← kg_path shows which edge fired; IMO adds clinical language
+      + audit trail
 ```
 
 Submitted ICD codes act as **traversal barriers** — paths through already-documented conditions are not expanded, eliminating false positives on well-coded notes.
+
+---
+
+## Demo Script
+
+| Step | Action | What to say |
+|---|---|---|
+| 1 | `GET /v1/graph/stats` | "120 nodes, 130 edges across 3 clinical domains — SNOMED, ICD-10-CM, PrimeKG." |
+| 2 | `POST /v1/demo/clean` | "Fully coded note — ClinicalGraph confirms it. Zero false positives." |
+| 3 | `POST /v1/demo/gap` | "Two symptoms. The KG finds N18.3 — a $3,000 HCC gap. IMO surfaces 'Diabetic Nephropathy with Edema' — the right language to document it. Traceable via `kg_path`." |
+| 4 | `POST /v1/demo/partial` | "Obesity patient — E66.9 and G47.33 not coded. ClinicalGraph finds the gaps." |
+| 5 | `POST /v1/enrich` | "Any LOINC-structured ambient AI output. One endpoint. Platform neutral." |
 
 ---
 
