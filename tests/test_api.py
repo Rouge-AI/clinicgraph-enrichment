@@ -68,3 +68,29 @@ def test_demo_endpoints_under_500ms(client):
         elapsed_ms = (time.perf_counter() - start) * 1000
         assert response.status_code == 200, f"/v1/demo/{scenario} returned {response.status_code}"
         assert elapsed_ms < 500, f"/v1/demo/{scenario} took {elapsed_ms:.0f}ms (> 500ms limit)"
+
+
+# RED-33: POST /v1/demo/gap response contains imo_terminology key
+def test_demo_gap_has_imo_terminology_key(client):
+    response = client.post("/v1/demo/gap")
+    assert response.status_code == 200
+    body = response.json()
+    assert "imo_terminology" in body
+
+
+# RED-34: POST /v1/demo/gap imo_terminology.source equals "mock" when IMO_API_KEY not set
+def test_demo_gap_imo_source_is_mock(client):
+    response = client.post("/v1/demo/gap")
+    body = response.json()
+    imo = body.get("imo_terminology")
+    assert imo is not None
+    assert imo["source"] == "mock"
+
+
+# RED-35: POST /v1/demo/gap imo_terminology.imo_term equals "Diabetic Nephropathy with Edema"
+def test_demo_gap_imo_term_value(client):
+    response = client.post("/v1/demo/gap")
+    body = response.json()
+    imo = body.get("imo_terminology")
+    assert imo is not None
+    assert imo["imo_term"] == "Diabetic Nephropathy with Edema"

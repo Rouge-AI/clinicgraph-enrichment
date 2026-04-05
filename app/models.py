@@ -1,5 +1,5 @@
 """Pydantic request/response models for ClinicalGraph API."""
-from typing import Any
+from typing import Any, Optional
 from pydantic import BaseModel, field_validator
 
 
@@ -22,6 +22,17 @@ class EnrichRequest(BaseModel):
         return v
 
 
+class IMOTerminology(BaseModel):
+    imo_term: str
+    imo_code: str
+    icd10_suggestion: str
+    confidence: float
+    reasoning: str
+    source: str  # "mock" or "imo_api"
+    matched_cuis: list[str]
+    action: str = "Consider updating note to IMO preferred term for coding specificity"
+
+
 class EnrichResponse(BaseModel):
     encounter_id: str
     status: str
@@ -29,3 +40,4 @@ class EnrichResponse(BaseModel):
     gap_flags: list[dict[str, Any]]
     audit_trail: dict[str, Any]
     note_quality: str
+    imo_terminology: Optional[IMOTerminology] = None

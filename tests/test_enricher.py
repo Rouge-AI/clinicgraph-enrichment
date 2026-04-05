@@ -85,3 +85,33 @@ def test_gap_flag_has_reason(kg):
         assert "reason" in flag
         assert isinstance(flag["reason"], str)
         assert len(flag["reason"]) > 0
+
+
+# RED-25 (IMO): note_gap enrichment returns imo_terminology field that is not None
+def test_note_gap_imo_terminology_not_none(kg):
+    req = _load_note("note_gap.json")
+    result = enrich_note(req, kg)
+    assert hasattr(result, "imo_terminology")
+    assert result.imo_terminology is not None
+
+
+# RED-26 (IMO): note_clean enrichment — imo_terminology field exists (may be None)
+def test_note_clean_imo_terminology_field_exists(kg):
+    req = _load_note("note_clean.json")
+    result = enrich_note(req, kg)
+    assert hasattr(result, "imo_terminology")
+
+
+# RED-27 (IMO): imo_terminology on note_gap contains all required fields
+def test_note_gap_imo_terminology_fields(kg):
+    req = _load_note("note_gap.json")
+    result = enrich_note(req, kg)
+    imo = result.imo_terminology
+    assert imo is not None
+    assert imo.imo_term == "Diabetic Nephropathy with Edema"
+    assert imo.imo_code == "IMO-44210"
+    assert imo.icd10_suggestion == "E11.65"
+    assert 0.0 <= imo.confidence <= 1.0
+    assert isinstance(imo.reasoning, str) and len(imo.reasoning) > 0
+    assert imo.source in ("mock", "imo_api")
+    assert isinstance(imo.action, str) and len(imo.action) > 0

@@ -4,7 +4,8 @@ from typing import Any
 
 import networkx as nx
 
-from app.models import EnrichRequest, EnrichResponse
+from app.imo_client import get_imo_suggestion
+from app.models import EnrichRequest, EnrichResponse, IMOTerminology
 from app.ner import extract_entities
 
 KG_VERSION = "clinicgraph-v0.1-demo"
@@ -207,6 +208,11 @@ def enrich_note(request: EnrichRequest, kg: nx.DiGraph) -> EnrichResponse:
     # 6. Note quality
     note_quality = _determine_note_quality(gap_flags, request.existing_icd_codes)
 
+    # 7. IMO terminology — collect all CUIs from NER entities and query
+    all_cuis = {e["cui"] for e in entities if e.get("cui")}
+    imo_raw = get_imo_suggestion(all_cuis)
+    imo_terminology = IMOTerminology(**imo_raw) if imo_raw else None
+
     nodes_traversed = len(unsubmitted_ner_seeds) + len(candidates)
     processing_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
@@ -215,6 +221,7 @@ def enrich_note(request: EnrichRequest, kg: nx.DiGraph) -> EnrichResponse:
         status="enriched" if gap_flags else "confirmed",
         existing_codes_validated=existing_codes_validated,
         gap_flags=gap_flags,
+        imo_terminology=imo_terminology,
         audit_trail={
             "kg_version": KG_VERSION,
             "nodes_traversed": nodes_traversed,
