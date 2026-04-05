@@ -1,0 +1,26 @@
+{
+  "encounter_id": "enc_demo_gap_001",
+  "note_sections": [
+    {
+      "loinc_code": "10164-2",
+      "loinc_display": "History of Present Illness",
+      "text": "Patient is a 67-year-old male with uncontrolled Type 2 diabetes on metformin 500mg twice daily. He presents with fatigue and bilateral leg swelling for the past 3 weeks. Blood pressure is elevated at 158/94 mmHg. He reports increased thirst and frequent urination over the past month."
+    },
+    {
+      "loinc_code": "11450-4",
+      "loinc_display": "Problem List",
+      "text": "1. Type 2 Diabetes Mellitus, uncontrolled\n2. Hypertension\n3. Bilateral leg edema"
+    },
+    {
+      "loinc_code": "10183-2",
+      "loinc_display": "Discharge Medications",
+      "text": "Metformin 500mg twice daily\nLisinopril 10mg daily\nAmlodipine 5mg daily"
+    },
+    {
+      "loinc_code": "8716-3",
+      "loinc_display": "Vital Signs",
+      "text": "BP: 158/94 mmHg, HR: 88 bpm, Weight: 98kg, BMI: 32.1, Temperature: 98.6F, SpO2: 97%"
+    }
+  ],
+  "existing_icd_codes": ["E11.65", "I10"]
+}

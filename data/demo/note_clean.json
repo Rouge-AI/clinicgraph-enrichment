@@ -1,0 +1,31 @@
+{
+  "encounter_id": "enc_demo_clean_001",
+  "note_sections": [
+    {
+      "loinc_code": "10164-2",
+      "loinc_display": "History of Present Illness",
+      "text": "Patient is a 71-year-old female with Type 2 diabetes mellitus with diabetic nephropathy and chronic kidney disease stage 3, well-managed on insulin therapy. She presents for routine follow-up. Blood pressure is controlled at 128/76 mmHg on lisinopril. She denies edema, chest pain, or shortness of breath. HbA1c was 7.1% at last visit three months ago."
+    },
+    {
+      "loinc_code": "11450-4",
+      "loinc_display": "Problem List",
+      "text": "1. Type 2 Diabetes Mellitus with hyperglycemia — well controlled\n2. Chronic kidney disease, stage 3 — stable, creatinine 1.6\n3. Hypertension — controlled\n4. Long-term insulin use\n5. Diabetic nephropathy"
+    },
+    {
+      "loinc_code": "10183-2",
+      "loinc_display": "Discharge Medications",
+      "text": "Insulin glargine 20 units at bedtime\nLisinopril 20mg daily\nAtorvastatin 40mg daily\nMetformin held due to CKD stage 3"
+    },
+    {
+      "loinc_code": "8716-3",
+      "loinc_display": "Vital Signs",
+      "text": "BP: 128/76 mmHg, HR: 72 bpm, Weight: 74kg, BMI: 26.4, Temperature: 98.4F, SpO2: 98%"
+    },
+    {
+      "loinc_code": "30954-2",
+      "loinc_display": "Relevant Diagnostic Tests",
+      "text": "HbA1c: 7.1% (3 months ago). Creatinine: 1.6 mg/dL. eGFR: 42. Urine albumin-creatinine ratio: 180 mg/g."
+    }
+  ],
+  "existing_icd_codes": ["E11.65", "N18.3", "Z79.4", "I10", "E11.21"]
+}

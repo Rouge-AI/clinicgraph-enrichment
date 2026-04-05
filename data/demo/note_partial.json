@@ -1,0 +1,26 @@
+{
+  "encounter_id": "enc_demo_partial_001",
+  "note_sections": [
+    {
+      "loinc_code": "10164-2",
+      "loinc_display": "History of Present Illness",
+      "text": "Patient is a 54-year-old female with hypertension presenting for routine wellness visit. She reports fatigue and mild shortness of breath on exertion over the past 6 weeks. She is obese with a BMI of 36.2 documented today. She snores heavily and her husband reports she stops breathing at night. She denies chest pain or leg swelling."
+    },
+    {
+      "loinc_code": "11450-4",
+      "loinc_display": "Problem List",
+      "text": "1. Hypertension, essential\n2. Fatigue\n3. Obesity — BMI 36.2 documented"
+    },
+    {
+      "loinc_code": "10183-2",
+      "loinc_display": "Discharge Medications",
+      "text": "Lisinopril 10mg daily\nAmlodipine 5mg daily"
+    },
+    {
+      "loinc_code": "8716-3",
+      "loinc_display": "Vital Signs",
+      "text": "BP: 142/88 mmHg, HR: 82 bpm, Weight: 103kg, BMI: 36.2, Temperature: 98.7F, SpO2: 96%"
+    }
+  ],
+  "existing_icd_codes": ["I10", "R53.83"]
+}
