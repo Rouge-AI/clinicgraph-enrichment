@@ -1,0 +1,9 @@
+# Runtime
+fastapi==0.115.12
+uvicorn==0.34.0
+networkx==3.6.1
+pydantic==2.12.5
+httpx==0.28.1
+
+# Testing
+pytest==9.0.2
